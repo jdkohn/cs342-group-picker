@@ -5,7 +5,7 @@ import random
 import math
 
 num_topics = 3
-GROUP_INDEX = ['Student1', 'Student2', 'Choice1', 'Choice2', 'Choice3', 'AssignedGroup']
+GROUP_INDEX = ['Student1', 'Student2', 'Choice1', 'Choice2', 'Choice3', 'AssignedGroup', 'MiseryIndex']
 homies = ['jk363', 'mbb40']
 
 def parseLine(line):
@@ -108,6 +108,8 @@ for homie in homies:
 			num_spaces_left[preferred_choice] -= 1
 			effective_spaces_left[preferred_choice] -= 1
 
+############ CHOICE 1 ##################
+
 # Assigning choice 1
 for topic in range(num_topics):
 	top_choice_groups = all_groups.loc[(all_groups['Choice1'] == topic) & np.isnan(all_groups['AssignedGroup'])]
@@ -121,15 +123,29 @@ for topic in range(num_topics):
 		effective_spaces_left[topic] = 0
 
 
+# Create the misery index !!!! Lower is worse
+for index, row in all_groups.iterrows():
+	if effective_spaces_left[row['Choice1']] == 0 and np.isnan(row['AssignedGroup']):
+		choice_two_rem = effective_spaces_left[row['Choice2']]
+		choice_three_rem = effective_spaces_left[row['Choice3']]
+
+		all_groups.loc[index, 'MiseryIndex'] = 2.1 * choice_two_rem + choice_three_rem
+
+# sort in order to misery index
+all_groups = all_groups.sort_values(by=['MiseryIndex'])
+
+for topic in range(num_topics):
+
+	# group had more than possible first choices
+	if effective_spaces_left[topic] != num_spaces_left[topic]:
+		# Select first num_spaces_left[topic] with lowest misery index
+
+
+
 print(all_groups)
-print(num_spaces_left)
-print(effective_spaces_left)
 
 
-# for choice in num_spaces_left:
-# 	for topic_num in range(num_topics):
-
-
+########### CHOICE 2 #############
 
 
 
