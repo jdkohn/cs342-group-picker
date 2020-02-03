@@ -2,6 +2,10 @@
 
 A Python program created by Matthew Brecher (mbb40) and Jacob Kohn (jk363) which assigns groups to topics for CS342.
 
+# Requirements
+
+All the requirements are in the `requirements.txt` file. To install them run `pip install -r requirements.txt` in the terminal.
+
 # Input format
 
 The program reads line-by-line from the file groups.txt. An example of this file is included in the repository. 
