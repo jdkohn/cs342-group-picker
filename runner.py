@@ -4,7 +4,7 @@ import numpy as np
 import random 
 import math
 
-num_topics = 3
+num_topics = 4
 GROUP_INDEX = ['Student1', 'Student2', 'Choice1', 'Choice2', 'Choice3', 'AssignedGroup', 'MiseryIndex']
 homies = ['jk363', 'mbb40']
 
@@ -92,7 +92,7 @@ def getNextAvailableTopic():
 		The index of the next topic with room for groups, -1 if not possible
 	'''
 	for topic in range(num_topics):
-		if num_spaces_left[topic] != 0 
+		if num_spaces_left[topic] != 0:
 			return topic
 
 	return -1
@@ -135,7 +135,6 @@ for topic in range(num_topics):
 	else:
 		effective_spaces_left[topic] = 0
 
-
 # Create the misery index !!!! Lower is worse
 for index, row in all_groups.iterrows():
 	if effective_spaces_left[row['Choice1']] == 0 and np.isnan(row['AssignedGroup']):
@@ -152,11 +151,13 @@ for topic in range(num_topics):
 	# group had more than possible first choices
 	if effective_spaces_left[topic] != num_spaces_left[topic]:
 		# Select first num_spaces_left[topic] with lowest misery index
-		top_x = all_groups.loc[(all_groups['Choice1'] = topic) & np.isnan(all_groups['AssignedGroup'])].head(num_spaces_left[topic])
+		top_x = all_groups.loc[(all_groups['Choice1'] == topic) & np.isnan(all_groups['AssignedGroup'])].head(num_spaces_left[topic])
 
 		for index, row in top_x.iterrows():
 			all_groups.loc[(all_groups['Student1'] == row['Student1']) & (all_groups['Student2'] == row['Student2']), 'AssignedGroup'] = topic
 
+
+		num_spaces_left[topic] = 0
 
 ########### CHOICE 2 #############
 
@@ -174,7 +175,6 @@ for topic in range(num_topics):
 		else:
 			effective_spaces_left[topic] = 0
 
-
 # Create the misery index !!!! Lower is worse
 for index, row in all_groups.iterrows():
 	if effective_spaces_left[row['Choice2']] == 0 and np.isnan(row['AssignedGroup']):
@@ -190,10 +190,12 @@ for topic in range(num_topics):
 	# group had more than possible first choices
 	if effective_spaces_left[topic] != num_spaces_left[topic]:
 		# Select first num_spaces_left[topic] with lowest misery index
-		top_x = all_groups.loc[(all_groups['Choice2'] = topic) & np.isnan(all_groups['AssignedGroup'])].head(num_spaces_left[topic])
+		top_x = all_groups.loc[(all_groups['Choice2'] == topic) & np.isnan(all_groups['AssignedGroup'])].head(num_spaces_left[topic])
 
 		for index, row in top_x.iterrows():
 			all_groups.loc[(all_groups['Student1'] == row['Student1']) & (all_groups['Student2'] == row['Student2']), 'AssignedGroup'] = topic
+
+		num_spaces_left[topic] = 0
 
 ########### CHOICE 3 #############
 
@@ -222,26 +224,34 @@ for topic in range(num_topics):
 
 			row = all_groups.loc[(all_groups['Choice3'] == topic) & np.isnan(all_groups['AssignedGroup'])].head(1)
 
-			all_groups.loc[(all_groups['Student1'] == row['Student1']) & (all_groups['Student2'] == row['Student2']), 'AssignedGroup'] = topic
+			if len(row.index) > 0:
 
+				all_groups.loc[(all_groups['Student1'] == row['Student1']) & (all_groups['Student2'] == row['Student2']), 'AssignedGroup'] = topic
 
 ########## RANDOM ASSIGN #########
 
-topic = 0
-for index, row in all_groups.loc[np.isnan(row['AssignedGroup'])]:
-	
-	s1 = row['Student1']
-	s2 = row['Student2']
+remaining = all_groups.loc[np.isnan(all_groups['AssignedGroup'])]
 
-	while num_spaces_left[topic] == 0:
-		topic += 1
+if len(remaining.index):
+	topic = 0
 
-	all_groups.loc[(all_groups['Student1'] == s1) & (all_groups['Student2'] == s2), 'AssignedGroup'] = topic
+	for index, row in remaining.iterrows():
+		
+		s1 = row['Student1']
+		s2 = row['Student2']
 
+		while num_spaces_left[topic] == 0:
+			topic = topic + 1
 
+		all_groups.loc[(all_groups['Student1'] == s1) & (all_groups['Student2'] == s2), 'AssignedGroup'] = topic
 
+remaining = all_groups.loc[np.isnan(all_groups['AssignedGroup'])]
 
+if len(remaining.index) != 0:
+	print('FAILED TO PLACE THESE GROUPS:')
+	print(remaining)
 
-
+print('\n\nFINAL GROUPS:')
+print(all_groups[['Student1', 'Student2', 'AssignedGroup']])
 
 
