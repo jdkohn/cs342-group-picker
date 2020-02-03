@@ -82,7 +82,20 @@ def parseFile(filename):
 
 	return pd.DataFrame(all_groups)
 	     
+def getNextAvailableTopic():
+	'''
+	Gets the next available topic
 
+	Returns
+	-------
+	topic : int
+		The index of the next topic with room for groups, -1 if not possible
+	'''
+	for topic in range(num_topics):
+		if num_spaces_left[topic] != 0 
+			return topic
+
+	return -1
 
 all_groups = parseFile('groups.txt')
 
@@ -139,13 +152,92 @@ for topic in range(num_topics):
 	# group had more than possible first choices
 	if effective_spaces_left[topic] != num_spaces_left[topic]:
 		# Select first num_spaces_left[topic] with lowest misery index
+		top_x = all_groups.loc[(all_groups['Choice1'] = topic) & np.isnan(all_groups['AssignedGroup'])].head(num_spaces_left[topic])
 
-
-
-print(all_groups)
+		for index, row in top_x.iterrows():
+			all_groups.loc[(all_groups['Student1'] == row['Student1']) & (all_groups['Student2'] == row['Student2']), 'AssignedGroup'] = topic
 
 
 ########### CHOICE 2 #############
+
+for topic in range(num_topics):
+
+	if num_spaces_left[topic] != 0:
+
+		top_choice_groups = all_groups.loc[(all_groups['Choice2'] == topic) & np.isnan(all_groups['AssignedGroup'])]
+		
+		# if all people can get their top choice, give them their top choice
+		if len(top_choice_groups.index) <= num_spaces_left[topic]:
+			all_groups.loc[(all_groups['Choice2'] == topic) & np.isnan(all_groups['AssignedGroup']), 'AssignedGroup'] = topic
+			num_spaces_left[topic] -= len(top_choice_groups.index)
+			effective_spaces_left[topic] -= len(top_choice_groups.index)
+		else:
+			effective_spaces_left[topic] = 0
+
+
+# Create the misery index !!!! Lower is worse
+for index, row in all_groups.iterrows():
+	if effective_spaces_left[row['Choice2']] == 0 and np.isnan(row['AssignedGroup']):
+		choice_three_rem = effective_spaces_left[row['Choice3']]
+
+		all_groups.loc[index, 'MiseryIndex'] = choice_three_rem
+
+# sort in order to misery index
+all_groups = all_groups.sort_values(by=['MiseryIndex'])
+
+for topic in range(num_topics):
+
+	# group had more than possible first choices
+	if effective_spaces_left[topic] != num_spaces_left[topic]:
+		# Select first num_spaces_left[topic] with lowest misery index
+		top_x = all_groups.loc[(all_groups['Choice2'] = topic) & np.isnan(all_groups['AssignedGroup'])].head(num_spaces_left[topic])
+
+		for index, row in top_x.iterrows():
+			all_groups.loc[(all_groups['Student1'] == row['Student1']) & (all_groups['Student2'] == row['Student2']), 'AssignedGroup'] = topic
+
+########### CHOICE 3 #############
+
+for topic in range(num_topics):
+
+	if num_spaces_left[topic] != 0:
+
+		top_choice_groups = all_groups.loc[(all_groups['Choice3'] == topic) & np.isnan(all_groups['AssignedGroup'])]
+		
+		# if all people can get their top choice, give them their top choice
+		if len(top_choice_groups.index) <= num_spaces_left[topic]:
+			all_groups.loc[(all_groups['Choice3'] == topic) & np.isnan(all_groups['AssignedGroup']), 'AssignedGroup'] = topic
+			num_spaces_left[topic] -= len(top_choice_groups.index)
+			effective_spaces_left[topic] -= len(top_choice_groups.index)
+		else:
+			effective_spaces_left[topic] = 0
+
+
+for topic in range(num_topics):
+	if num_spaces_left[topic] != effective_spaces_left[topic]:
+		max_spaces_left = num_spaces_left[topic]
+
+		for i in range(max_spaces_left):
+			# get top 'num_spaces_left' groups from that topic randomly
+			# assign those to group
+
+			row = all_groups.loc[(all_groups['Choice3'] == topic) & np.isnan(all_groups['AssignedGroup'])].head(1)
+
+			all_groups.loc[(all_groups['Student1'] == row['Student1']) & (all_groups['Student2'] == row['Student2']), 'AssignedGroup'] = topic
+
+
+########## RANDOM ASSIGN #########
+
+topic = 0
+for index, row in all_groups.loc[np.isnan(row['AssignedGroup'])]:
+	
+	s1 = row['Student1']
+	s2 = row['Student2']
+
+	while num_spaces_left[topic] == 0:
+		topic += 1
+
+	all_groups.loc[(all_groups['Student1'] == s1) & (all_groups['Student2'] == s2), 'AssignedGroup'] = topic
+
 
 
 
