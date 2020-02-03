@@ -254,4 +254,6 @@ if len(remaining.index) != 0:
 print('\n\nFINAL GROUPS:')
 print(all_groups[['Student1', 'Student2', 'AssignedGroup']])
 
+all_groups.to_csv('groups.csv')
+
 
