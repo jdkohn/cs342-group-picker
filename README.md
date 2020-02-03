@@ -12,6 +12,15 @@ netid_1 (string), netid_2 (string), choice1 (int), choice2 (int), choice3 (int)
 OR
 netid_1 (string), choice1 (int), choice2 (int), choice3 (int)
 
+# TL;DR
+
+0. Make sure that our friends to their top choice. 
+1. Assign people to their top choice. 
+1a. If there are ties, assign the people who are least likely to get their second and third choices to their first chioce. 2. Repeat for second choice
+3. Assign groups to third choice
+3a. If there are ties, assign as many groups as possible to third choice
+4. Assign remaining groups randomly to topics which have open spaces
+
 # Methodology
 
 First, make sure that our friends get their first choice. Our friends' NetIDs are the `homies` array and will be automatically assigned to their first choice if space allows it.
