@@ -6,15 +6,19 @@ A Python program created by Matthew Brecher (mbb40) and Jacob Kohn (jk363) which
 
 All the requirements are in the `requirements.txt` file. To install them run `pip install -r requirements.txt` in the terminal.
 
+# ToDo
+
+In order to run this program correctly, set `num_topics` equal to the number of topics on line 7.
+
 # Input format
 
 The program reads line-by-line from the file groups.txt. An example of this file is included in the repository. 
 
 A line must be structured either as:
 
-netid_1 (string), netid_2 (string), choice1 (int), choice2 (int), choice3 (int)
-OR
-netid_1 (string), choice1 (int), choice2 (int), choice3 (int)
+netid_1 (string), netid_2 (string), choice1 (int), choice2 (int), choice3 (int) \n
+OR \n
+netid_1 (string), choice1 (int), choice2 (int), choice3 (int) \n
 
 # TL;DR
 
