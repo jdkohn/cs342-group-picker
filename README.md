@@ -16,9 +16,11 @@ The program reads line-by-line from the file groups.txt. An example of this file
 
 A line must be structured either as:
 
-netid_1 (string), netid_2 (string), choice1 (int), choice2 (int), choice3 (int) \n
-OR \n
-netid_1 (string), choice1 (int), choice2 (int), choice3 (int) \n
+netid_1 (string), netid_2 (string), choice1 (int), choice2 (int), choice3 (int)
+
+OR
+
+netid_1 (string), choice1 (int), choice2 (int), choice3 (int)
 
 # TL;DR
 
