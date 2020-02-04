@@ -40,4 +40,4 @@ This process is repeated for the second choice. For the third choice, if there a
 
 Finally, combine groups. Start with merging together groups of 2. If there are an odd number of groups of 2, fill spots 3 and 4 in the final group with people who signed up by themselves. Then add a fifth member to teams within that topic. 
 
-Finally, add people who did not sign up for a group to a random group which has room. Print out the groups that were made.
+Finally, print out the groups that were made.
