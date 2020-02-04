@@ -5,7 +5,8 @@ import random
 import math
 
 num_topics = 4
-GROUP_INDEX = ['Student1', 'Student2', 'Choice1', 'Choice2', 'Choice3', 'AssignedGroup', 'MiseryIndex']
+GROUP_INDEX = ['Student1', 'Student2', 'Choice1', 'Choice2', 'Choice3', 'AssignedGroup', 'MiseryIndex', 'FinalAssignment']
+FINAL_INDEX = ['Student1', 'Student2', 'Student3', 'Student4', 'Student5', 'Topic']
 homies = ['jk363', 'mbb40']
 
 def parseLine(line):
@@ -35,6 +36,7 @@ def parseLine(line):
 		group['Choice1'] = int(parts[2])
 		group['Choice2'] = int(parts[3])
 		group['Choice3'] = int(parts[4])
+		group['FinalAssignment'] = False
 	
 	elif len(parts) == 4:
 		group['Student1'] = parts[0].strip()
@@ -42,21 +44,11 @@ def parseLine(line):
 		group['Choice1'] = int(parts[1])
 		group['Choice2'] = int(parts[2])
 		group['Choice3'] = int(parts[3])
+		group['FinalAssignment'] = False
 	else:
 		group = None
 
 	return group
-
-def coinFlip():
-	'''
-	Returns True or False at random
-
-	Returns
-	--------
-	True or False (randomly selected)
-	'''
-	return random.choice([True, False])
-
 
 def parseFile(filename):
 	'''
@@ -81,23 +73,33 @@ def parseFile(filename):
 		all_groups.append(parseLine(line))
 
 	return pd.DataFrame(all_groups)
-	     
-def getNextAvailableTopic():
+
+def readNetIds(filename):
 	'''
-	Gets the next available topic
+	Parses a file and returns a list of all the net ids
+
+	Paramaters
+	----------
+	filename : string
+		The name of the file to parse
 
 	Returns
-	-------
-	topic : int
-		The index of the next topic with room for groups, -1 if not possible
+	--------
+	ids : [string]
+		Array of all the netids in CS342
 	'''
-	for topic in range(num_topics):
-		if num_spaces_left[topic] != 0:
-			return topic
+	netid_file = open(filename, 'r')
+	netids = netid_file.readlines()
 
-	return -1
+	ids = []
+	for netid in netids:
+		ids.append(netid.replace('\n', ''))
+
+	return ids
+
 
 all_groups = parseFile('groups.txt')
+all_students = readNetIds('netids.txt')
 
 # set max number of groups that can be assigned to one topic
 max_groups_in_topic = math.ceil(len(all_groups.index) / num_topics)
@@ -226,7 +228,9 @@ for topic in range(num_topics):
 
 			if len(row.index) > 0:
 
-				all_groups.loc[(all_groups['Student1'] == row['Student1']) & (all_groups['Student2'] == row['Student2']), 'AssignedGroup'] = topic
+				all_groups.loc[(all_groups['Student1'] == row['Student1'].iloc[0]) & (all_groups['Student2'] == row['Student2'].iloc[0]), 'AssignedGroup'] = topic
+				num_spaces_left[topic] -= 1
+
 
 ########## RANDOM ASSIGN #########
 
@@ -235,25 +239,151 @@ remaining = all_groups.loc[np.isnan(all_groups['AssignedGroup'])]
 if len(remaining.index):
 	topic = 0
 
+
+
 	for index, row in remaining.iterrows():
-		
 		s1 = row['Student1']
 		s2 = row['Student2']
 
 		while num_spaces_left[topic] == 0:
 			topic = topic + 1
 
-		all_groups.loc[(all_groups['Student1'] == s1) & (all_groups['Student2'] == s2), 'AssignedGroup'] = topic
+		if s2 is None:
+			all_groups.loc[(all_groups['Student1'] == s1) & (all_groups['Student2'].isnull()), 'AssignedGroup'] = topic
+		else:
+			all_groups.loc[(all_groups['Student1'] == s1) & (all_groups['Student2'] == s2), 'AssignedGroup'] = topic
 
 remaining = all_groups.loc[np.isnan(all_groups['AssignedGroup'])]
 
-if len(remaining.index) != 0:
-	print('FAILED TO PLACE THESE GROUPS:')
-	print(remaining)
 
-print('\n\nFINAL GROUPS:')
-print(all_groups[['Student1', 'Student2', 'AssignedGroup']])
+all_final_groups = []
+# put groups together
+for topic in range(num_topics):
 
-all_groups.to_csv('groups.csv')
+	final_groups = []
+
+	# get all 2-person groups
+	groups_in_topic = all_groups.loc[(all_groups['AssignedGroup'] == topic) & ~all_groups['Student2'].isnull() & ~all_groups['FinalAssignment']]
+
+	while len(groups_in_topic.index) > 1:
+		top_two = groups_in_topic.head(2)
+
+		g = pd.Series(index=FINAL_INDEX)
+		g['Student1'] = top_two['Student1'].iloc[0]
+		g['Student2'] = top_two['Student2'].iloc[0]
+		g['Student3'] = top_two['Student1'].iloc[1]
+		g['Student4'] = top_two['Student2'].iloc[1]
+		g['Student5'] = None
+		g['Topic'] = topic
+
+		final_groups.append(g)
+
+		all_groups.loc[(all_groups['Student1'] == g['Student1']) | (all_groups['Student1'] == g['Student3']), 'FinalAssignment'] = True
+
+		groups_in_topic = all_groups.loc[(all_groups['AssignedGroup'] == topic) & ~all_groups['Student2'].isnull() & ~all_groups['FinalAssignment']]
+
+
+	# Add single groups
+	single_groups = all_groups.loc[(all_groups['AssignedGroup'] == topic) & all_groups['Student2'].isnull() & ~all_groups['FinalAssignment']]
+
+	if len(groups_in_topic.index) == 1:
+		g = pd.Series(index=FINAL_INDEX)
+		g['Student1'] = groups_in_topic['Student1'].iloc[0]
+		g['Student2'] = groups_in_topic['Student2'].iloc[0]
+
+		if len(single_groups.index) >= 2:
+			g['Student3'] = single_groups['Student1'].iloc[0]
+			g['Student4'] = single_groups['Student1'].iloc[1]
+		elif len(single_groups.index) == 1:
+			g['Student3'] = single_groups['Student1'].iloc[0]
+			g['Student4'] = None
+		else:
+			g['Student3'] = None
+			g['Student4'] = None
+
+		g['Student5'] = None
+		g['Topic'] = topic
+
+		final_groups.append(g)
+
+		all_groups.loc[(all_groups['Student1'] == g['Student1']) | (all_groups['Student1'] == g['Student3']) | (all_groups['Student1'] == g['Student4']), 'FinalAssignment'] = True
+
+
+	# Now only have single groups
+	single_groups = all_groups.loc[(all_groups['AssignedGroup'] == topic) & all_groups['Student2'].isnull() & ~all_groups['FinalAssignment']]
+	final_group_index = 0
+
+	while len(single_groups.index) > 0:
+		foundGroup = False 
+		create_new_group = False
+		group_ids = []
+
+		while not foundGroup:
+
+			if final_group_index >= len(final_groups):
+				group_ids = single_groups['Student1'].values
+				create_new_group = True
+				break
+
+			if final_groups[final_group_index]['Student5'] is None:
+				final_groups[final_group_index]['Student5'] = single_groups['Student1'].iloc[0]
+				foundGroup = True
+				all_groups.loc[(all_groups['Student1'] == single_groups['Student1'].iloc[0]), 'FinalAssignment'] = True
+			else:
+				final_group_index += 1
+
+		if create_new_group:
+			g = pd.Series(index=FINAL_INDEX)
+			for i in range(len(group_ids)):
+				col_str = 'Student' + str(i + 1)
+				g[col_str] = group_ids[i]
+				g['Topic'] = topic
+
+			final_groups.append(g)
+			break
+
+		single_groups = all_groups.loc[(all_groups['AssignedGroup'] == topic) & all_groups['Student2'].isnull() & ~all_groups['FinalAssignment']]
+
+
+	all_final_groups = all_final_groups + final_groups
+
+final_groups = pd.DataFrame(all_final_groups)
+
+assigned_students = []
+for i in range(5):
+	student_str = 'Student' + str(i + 1)
+
+	students = final_groups[student_str].values.tolist()
+
+	if students is None:
+		continue
+
+
+	if len(assigned_students) > 0:
+		assigned_students = assigned_students + students
+	else: 
+		assigned_students = students
+
+unassigned = set(all_students) - set(assigned_students)
+
+if len(unassigned) > 0:
+	print('Failed to assign to groups:')
+	for s in unassigned:
+		print(s)
+
+for index, row in final_groups.iterrows():
+	s = ''
+
+	for i in range(5):
+		student_str = 'Student' + str(i + 1)
+		if row[student_str] is not None and type(row[student_str]) is str:
+			s = s + row[student_str] + ','
+
+	s = s + str(row['Topic'])
+
+	print(s)
+
+
+
 
 
